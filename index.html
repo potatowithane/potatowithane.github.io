@@ -1,10 +1,773 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello</title>
+    <title>Group Schedule Clock</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --dark: #212529;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --danger: #e63946;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #4361ee, #4cc9f0);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: var(--dark);
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+        
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 10px;
+            font-size: 2.8rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 30px;
+            font-size: 1.2rem;
+        }
+        
+        .clock-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+        }
+        
+        #current-time {
+            font-size: 5rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        #current-date {
+            font-size: 1.5rem;
+            color: var(--gray);
+            margin-bottom: 30px;
+        }
+        
+        .profile-section {
+            margin-bottom: 25px;
+        }
+        
+        .profile-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .profile-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            margin-right: 15px;
+        }
+        
+        h2 {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn i {
+            margin-right: 8px;
+        }
+        
+        .btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: var(--gray);
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+        }
+        
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+        
+        .schedule-display {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .schedule-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .schedule-item:last-child {
+            border-bottom: none;
+        }
+        
+        .profile-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .profile-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+        }
+        
+        .profile-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .profile-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 12px;
+        }
+        
+        .profile-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .action-btn.edit {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .action-btn.delete {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .action-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            background: var(--success);
+            color: white;
+            font-weight: 500;
+            box-shadow: var(--shadow);
+            transform: translateX(120%);
+            transition: transform 0.3s ease-out;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: var(--gray);
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #ddd;
+        }
+        
+        .deploy-instructions {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 25px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+        
+        .deploy-instructions h2 {
+            color: var(--secondary);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .deploy-instructions ol {
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .deploy-instructions li {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .deploy-instructions code {
+            background: rgba(0,0,0,0.05);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .deploy-instructions .terminal {
+            background: #2d2d2d;
+            color: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .deploy-instructions .terminal .comment {
+            color: #7ec699;
+        }
+        
+        .deploy-instructions .terminal .command {
+            color: #f8f8f2;
+        }
+        
+        .deploy-instructions .terminal .output {
+            color: #f1fa8c;
+        }
+        
+        .deploy-btn {
+            display: block;
+            margin: 20px auto;
+            max-width: 300px;
+            text-align: center;
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
-    <h1>Hello World</h1>
+    <div class="notification" id="notification">Profile saved successfully!</div>
+    
+    <div>
+        <h1>Group Schedule Clock</h1>
+        <p class="subtitle">Create profiles and set schedules for your group</p>
+        
+        <div class="container">
+            <div class="card">
+                <div class="clock-container">
+                    <div id="current-time">00:00:00</div>
+                    <div id="current-date">Monday, January 1, 2023</div>
+                </div>
+                
+                <div class="profile-section">
+                    <div class="profile-header">
+                        <div class="profile-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <h2>Your Profile</h2>
+                    </div>
+                    
+                    <form id="profile-form">
+                        <div class="form-group">
+                            <label for="profile-name">Profile Name</label>
+                            <input type="text" id="profile-name" placeholder="Enter your name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="start-time">Start Time</label>
+                            <input type="time" id="start-time" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="end-time">End Time</label>
+                            <input type="time" id="end-time" required>
+                        </div>
+                        
+                        <button type="submit" class="btn">
+                            <i class="fas fa-save"></i> Save Profile
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="schedule-display">
+                    <h3>Your Schedule</h3>
+                    <div id="schedule-info">
+                        <div class="empty-state">
+                            <i class="far fa-calendar"></i>
+                            <p>No schedule set yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="profile-header">
+                    <div class="profile-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h2>Group Profiles</h2>
+                </div>
+                
+                <div class="profile-list" id="profiles-container">
+                    <div class="empty-state">
+                        <i class="fas fa-user-friends"></i>
+                        <p>No profiles created yet</p>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <button class="btn btn-secondary" id="clear-all-btn">
+                        <i class="fas fa-trash-alt"></i> Clear All Profiles
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="deploy-instructions">
+            <h2>Deployment Guide for GitHub Pages</h2>
+            <p>Follow these steps to deploy this app to your GitHub Pages site:</p>
+            
+            <ol>
+                <li><strong>Save this file</strong> as <code>index.html</code></li>
+                <li><strong>Create a GitHub repository</strong> named <code>potatowithane.github.io</code></li>
+                <li><strong>Upload the file</strong> to your repository</li>
+                <li><strong>Enable GitHub Pages</strong> in your repository settings</li>
+            </ol>
+            
+            <div class="terminal">
+                <span class="comment"># Step-by-step terminal commands:</span><br><br>
+                <span class="command">git init</span><br>
+                <span class="output">Initialized empty Git repository</span><br><br>
+                
+                <span class="command">git add index.html</span><br><br>
+                
+                <span class="command">git commit -m "Add Group Schedule Clock app"</span><br>
+                <span class="output">[main (root-commit) abc123] Add Group Schedule Clock app</span><br>
+                <span class="output">1 file changed, 1234 insertions(+)</span><br>
+                <span class="output">create mode 100644 index.html</span><br><br>
+                
+                <span class="command">git remote add origin https://github.com/potatowithane/potatowithane.github.io.git</span><br><br>
+                
+                <span class="command">git push -u origin main</span><br>
+                <span class="output">Enumerating objects: 3, done.</span><br>
+                <span class="output">Counting objects: 100% (3/3), done.</span><br>
+                <span class="output">Writing objects: 100% (3/3), 5.23 KiB | 5.23 MiB/s, done.</span><br>
+                <span class="output">Total 3 (delta 0), reused 0 (delta 0)</span><br>
+                <span class="output">To https://github.com/potatowithane/potatowithane.github.io.git</span><br>
+                <span class="output"> * [new branch]      main -> main</span><br>
+                <span class="output">Branch 'main' set up to track remote branch 'main' from 'origin'.</span>
+            </div>
+            
+            <p>After pushing, your app will be live at:</p>
+            <p style="text-align: center; font-size: 1.2rem; font-weight: bold;">
+                https://potatowithane.github.io
+            </p>
+            
+            <a href="#" class="btn deploy-btn" onclick="location.reload()">
+                <i class="fas fa-sync-alt"></i> Refresh App
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const currentTimeEl = document.getElementById('current-time');
+        const currentDateEl = document.getElementById('current-date');
+        const profileForm = document.getElementById('profile-form');
+        const profileNameInput = document.getElementById('profile-name');
+        const startTimeInput = document.getElementById('start-time');
+        const endTimeInput = document.getElementById('end-time');
+        const scheduleInfo = document.getElementById('schedule-info');
+        const profilesContainer = document.getElementById('profiles-container');
+        const clearAllBtn = document.getElementById('clear-all-btn');
+        const notification = document.getElementById('notification');
+        
+        // Initialize profiles array
+        let profiles = JSON.parse(localStorage.getItem('groupScheduleProfiles')) || [];
+        
+        // Update clock function
+        function updateClock() {
+            const now = new Date();
+            
+            // Format time
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            currentTimeEl.textContent = `${hours}:${minutes}:${seconds}`;
+            
+            // Format date
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            currentDateEl.textContent = now.toLocaleDateString('en-US', options);
+            
+            // Check schedules
+            checkSchedules(now);
+        }
+        
+        // Check if current time is within any schedule
+        function checkSchedules(now) {
+            const currentTime = now.getHours() * 60 + now.getMinutes();
+            
+            profiles.forEach(profile => {
+                const startParts = profile.startTime.split(':');
+                const endParts = profile.endTime.split(':');
+                
+                const startTime = parseInt(startParts[0]) * 60 + parseInt(startParts[1]);
+                const endTime = parseInt(endParts[0]) * 60 + parseInt(endParts[1]);
+                
+                if (currentTime >= startTime && currentTime <= endTime) {
+                    // This user is currently in their scheduled time
+                    console.log(`${profile.name} is in their scheduled time`);
+                }
+            });
+        }
+        
+        // Show notification
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Save profile to localStorage
+        function saveProfile(e) {
+            e.preventDefault();
+            
+            const profile = {
+                id: Date.now(), // unique ID based on timestamp
+                name: profileNameInput.value,
+                startTime: startTimeInput.value,
+                endTime: endTimeInput.value
+            };
+            
+            // Check if profile already exists
+            const existingIndex = profiles.findIndex(p => p.id === profile.id);
+            
+            if (existingIndex === -1) {
+                // Add new profile
+                profiles.push(profile);
+            } else {
+                // Update existing profile
+                profiles[existingIndex] = profile;
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('groupScheduleProfiles', JSON.stringify(profiles));
+            
+            // Update UI
+            updateScheduleDisplay(profile);
+            renderProfiles();
+            
+            // Show notification
+            showNotification('Profile saved successfully!');
+            
+            // Reset form
+            profileForm.reset();
+        }
+        
+        // Update schedule display
+        function updateScheduleDisplay(profile) {
+            scheduleInfo.innerHTML = `
+                <div class="schedule-item">
+                    <span><strong>Name:</strong></span>
+                    <span>${profile.name}</span>
+                </div>
+                <div class="schedule-item">
+                    <span><strong>Start Time:</strong></span>
+                    <span>${formatTime(profile.startTime)}</span>
+                </div>
+                <div class="schedule-item">
+                    <span><strong>End Time:</strong></span>
+                    <span>${formatTime(profile.endTime)}</span>
+                </div>
+            `;
+        }
+        
+        // Format time for display (convert to AM/PM)
+        function formatTime(timeString) {
+            const [hours, minutes] = timeString.split(':');
+            let period = 'AM';
+            let formattedHours = parseInt(hours);
+            
+            if (formattedHours >= 12) {
+                period = 'PM';
+                if (formattedHours > 12) {
+                    formattedHours -= 12;
+                }
+            }
+            
+            if (formattedHours === 0) {
+                formattedHours = 12;
+            }
+            
+            return `${formattedHours}:${minutes} ${period}`;
+        }
+        
+        // Render profiles list
+        function renderProfiles() {
+            if (profiles.length === 0) {
+                profilesContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-user-friends"></i>
+                        <p>No profiles created yet</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            profilesContainer.innerHTML = '';
+            
+            profiles.forEach(profile => {
+                const profileEl = document.createElement('div');
+                profileEl.className = 'profile-item';
+                profileEl.innerHTML = `
+                    <div class="profile-info">
+                        <div class="profile-avatar">${profile.name.charAt(0)}</div>
+                        <div>
+                            <div><strong>${profile.name}</strong></div>
+                            <div>${formatTime(profile.startTime)} - ${formatTime(profile.endTime)}</div>
+                        </div>
+                    </div>
+                    <div class="profile-actions">
+                        <button class="action-btn edit" data-id="${profile.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete" data-id="${profile.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                profilesContainer.appendChild(profileEl);
+            });
+            
+            // Add event listeners to action buttons
+            document.querySelectorAll('.action-btn.edit').forEach(btn => {
+                btn.addEventListener('click', () => editProfile(btn.dataset.id));
+            });
+            
+            document.querySelectorAll('.action-btn.delete').forEach(btn => {
+                btn.addEventListener('click', () => deleteProfile(btn.dataset.id));
+            });
+        }
+        
+        // Edit profile
+        function editProfile(id) {
+            const profile = profiles.find(p => p.id == id);
+            
+            if (profile) {
+                profileNameInput.value = profile.name;
+                startTimeInput.value = profile.startTime;
+                endTimeInput.value = profile.endTime;
+                
+                // Scroll to form
+                document.querySelector('.profile-section').scrollIntoView({ 
+                    behavior: 'smooth' 
+                });
+                
+                // Show notification
+                showNotification(`Editing ${profile.name}'s profile`);
+            }
+        }
+        
+        // Delete profile
+        function deleteProfile(id) {
+            if (confirm('Are you sure you want to delete this profile?')) {
+                profiles = profiles.filter(profile => profile.id != id);
+                localStorage.setItem('groupScheduleProfiles', JSON.stringify(profiles));
+                renderProfiles();
+                showNotification('Profile deleted');
+                
+                // Clear schedule display if it was the active profile
+                if (scheduleInfo.innerHTML.includes('No schedule set yet') === false) {
+                    scheduleInfo.innerHTML = `
+                        <div class="empty-state">
+                            <i class="far fa-calendar"></i>
+                            <p>No schedule set yet</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+        
+        // Clear all profiles
+        function clearAllProfiles() {
+            if (confirm('Are you sure you want to delete ALL profiles? This cannot be undone.')) {
+                profiles = [];
+                localStorage.removeItem('groupScheduleProfiles');
+                renderProfiles();
+                showNotification('All profiles deleted');
+                
+                // Clear schedule display
+                scheduleInfo.innerHTML = `
+                    <div class="empty-state">
+                        <i class="far fa-calendar"></i>
+                        <p>No schedule set yet</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Initialize the app
+        function init() {
+            // Set up clock
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // Load existing profiles
+            renderProfiles();
+            
+            // Set up form submission
+            profileForm.addEventListener('submit', saveProfile);
+            
+            // Set up clear all button
+            clearAllBtn.addEventListener('click', clearAllProfiles);
+            
+            // Set current time as default for schedule
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            startTimeInput.value = `${hours}:${minutes}`;
+            
+            // Set end time to 1 hour later
+            const endTime = new Date(now.getTime() + 60 * 60 * 1000);
+            const endHours = endTime.getHours().toString().padStart(2, '0');
+            const endMinutes = endTime.getMinutes().toString().padStart(2, '0');
+            endTimeInput.value = `${endHours}:${minutes}`;
+        }
+        
+        // Start the app
+        init();
+    </script>
 </body>
 </html>
